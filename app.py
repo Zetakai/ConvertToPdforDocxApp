@@ -13,6 +13,13 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import (Qt,QTimer)
 from PIL import Image
 import platform
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib import colors
+import pandas as pd
+import pdfplumber
+from docx.shared import Inches
 
 # Initialize the SQLite database
 def init_db():
@@ -116,7 +123,7 @@ class MenuWindow(QWidget):
 
         # File selection group
         file_selection_group = QGroupBox("File Selection")
-        self.supported_files_label = QLabel("Supported file types: DOCX, CSV, TXT, XLSX, PNG, JPG, JPEG, HTML, MD")
+        self.supported_files_label = QLabel("Supported file types: DOCX, CSV, TXT, XLSX, XLS, PNG, JPG, JPEG, PDF")
         self.file_label = QLabel("No file selected.")
         self.select_button = QPushButton("Select File")
         self.select_button.clicked.connect(self.select_file)
@@ -164,7 +171,7 @@ class MenuWindow(QWidget):
     def select_file(self):
         file_dialog = QFileDialog()
         file_path, _ = file_dialog.getOpenFileName(
-            self, "Select File", "", "Files (*.docx *.csv *.txt *.xlsx *.png *.jpg *.jpeg *.html *.md)"
+            self, "Select File", "", "Files (*.docx *.csv *.txt *.xlsx *.xls *.png *.jpg *.jpeg *.pdf)"
         )
         if file_path:
             self.file_path = file_path
@@ -202,30 +209,68 @@ class MenuWindow(QWidget):
                 self.convert_txt_to_pdf(self.file_path)
             elif self.file_path.endswith('.xlsx'):
                 self.convert_excel_to_pdf(self.file_path)
+            elif self.file_path.endswith('.xls'):
+                self.convert_excel_to_pdf(self.file_path)
             elif self.file_path.endswith(('.png', '.jpg', '.jpeg')):
                 self.convert_image_to_pdf(self.file_path)
-            elif self.file_path.endswith('.html'):
-                self.convert_html_to_pdf(self.file_path)
-            elif self.file_path.endswith('.md'):
-                self.convert_markdown_to_pdf(self.file_path)
             else:
                 QMessageBox.warning(self, "Warning", "Unsupported file type.")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to convert file to PDF: {e}")
 
     def convert_to_docx(self):
-        # Example of converting other formats to DOCX
+        if not self.file_path:  # Ensure file_path is set
+            QMessageBox.warning(self, "Error", "No file selected for conversion.")
+            return
+
+        # Define the output DOCX file path
+        docx_path = self.file_path.rsplit('.', 1)[0] + '.docx'
+
         try:
-            docx_path = self.file_path.rsplit('.', 1)[0] + '.docx'
-            if self.file_path.endswith('.txt'):
-                doc = Document()
-                with open(self.file_path, "r") as file:
+            doc = Document()
+
+            # Handle .csv files
+            if self.file_path.endswith('.csv'):
+                df = pd.read_csv(self.file_path)
+                doc.add_paragraph(", ".join(df.columns))
+                for _, row in df.iterrows():
+                    doc.add_paragraph(", ".join(str(value) for value in row))
+
+            # Handle .txt files
+            elif self.file_path.endswith('.txt'):
+                with open(self.file_path, 'r', encoding='utf-8') as file:
                     for line in file:
                         doc.add_paragraph(line.strip())
-                doc.save(docx_path)
-            # Implement additional conversions to DOCX as needed
+
+            # Handle .xlsx and .xls files
+            elif self.file_path.endswith('.xlsx') or self.file_path.endswith('.xls'):
+                df = pd.read_excel(self.file_path)
+                doc.add_paragraph(", ".join(df.columns))
+                for _, row in df.iterrows():
+                    doc.add_paragraph(", ".join(str(value) for value in row))
+
+            # Handle .png, .jpg, .jpeg files
+            elif self.file_path.endswith(('.png', '.jpg', '.jpeg')):
+                doc.add_paragraph("Image:")
+                doc.add_picture(self.file_path, width=Inches(5))  # Add image with fixed width
+
+            # Handle .pdf files
+            elif self.file_path.endswith('.pdf'):
+                with pdfplumber.open(self.file_path) as pdf:
+                    for page in pdf.pages:
+                        text = page.extract_text()
+                        if text:
+                            doc.add_paragraph(text)
+
+            else:
+                QMessageBox.warning(self, "Error", "Unsupported file type for DOCX conversion.")
+                return
+
+            # Save the created DOCX file
+            doc.save(docx_path)
             QMessageBox.information(self, "Success", f"File converted to DOCX: {docx_path}")
             open_file(docx_path)
+            
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to convert file to DOCX: {e}")
 
@@ -269,10 +314,45 @@ class MenuWindow(QWidget):
         open_file(pdf_path)
 
     def convert_excel_to_pdf(self, file_path):
-        df = pd.read_excel(file_path)
-        pdf_path = file_path.replace('.xlsx', '.pdf')
-        df.to_html("temp.html")
-        pdfkit.from_file("temp.html", pdf_path)
+            # Check if the file is .xls or .xlsx and load it into a DataFrame
+        if file_path.endswith('.xls') or file_path.endswith('.xlsx'):
+            df = pd.read_excel(file_path)
+        else:
+            QMessageBox.warning(self, "Error", "Unsupported file type. Please select an Excel file (.xls or .xlsx).")
+            return
+        
+        # Define the output PDF file path
+        pdf_path = file_path.replace('.xls', '.pdf').replace('.xlsx', '.pdf')
+
+        # Set up the PDF canvas
+        c = canvas.Canvas(pdf_path, pagesize=landscape(letter))
+        width, height = landscape(letter)
+
+        # Convert DataFrame to a list of lists for Table
+        data = [df.columns.to_list()] + df.values.tolist()
+
+        # Create a Table with the data
+        table = Table(data)
+        
+        # Style the table
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),  # Header row background
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),  # Header row text color
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Center align all cells
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Header row font
+            ('FONTSIZE', (0, 0), (-1, -1), 10),  # Font size for all cells
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),  # Padding for header row
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),  # Background for other rows
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)  # Grid lines for all cells
+        ]))
+
+        # Calculate the table size and position it on the canvas
+        table.wrapOn(c, width, height)
+        table.drawOn(c, 30, height - 50 - len(data) * 15)  # Adjust position based on data length
+
+        # Save the canvas
+        c.save()
+
         QMessageBox.information(self, "Success", f"Excel converted to PDF: {pdf_path}")
         open_file(pdf_path)
 
@@ -289,15 +369,6 @@ class MenuWindow(QWidget):
         QMessageBox.information(self, "Success", f"HTML converted to PDF: {pdf_path}")
         open_file(pdf_path)
 
-    def convert_markdown_to_pdf(self, file_path):
-        with open(file_path, "r") as file:
-            html = markdown2.markdown(file.read())
-            with open("temp.html", "w") as temp_file:
-                temp_file.write(html)
-        pdf_path = file_path.replace('.md', '.pdf')
-        pdfkit.from_file("temp.html", pdf_path)
-        QMessageBox.information(self, "Success", f"Markdown converted to PDF: {pdf_path}")
-        open_file(pdf_path)
 
     def logout(self):
         self.close()

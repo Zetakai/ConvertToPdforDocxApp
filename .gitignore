@@ -1,2 +1,6 @@
 env/
 users.db
+build/
+dist/
+app.spec
+dekstop.ini
