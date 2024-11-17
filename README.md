@@ -29,10 +29,12 @@ Aplikasi ini dibuat dengan Python, menggunakan PyQt6 untuk antarmuka grafis dan 
    - Masukkan username dan password unik.
    - Klik **Register** untuk membuat akun Anda.
    - Jika pendaftaran berhasil, pesan konfirmasi akan muncul. Jika tidak, akan muncul notifikasi jika username sudah digunakan.
+
 **3.2 Masuk Pengguna**
    - Masukkan username dan password terdaftar Anda di jendela **Login**.
    - Klik **Login** untuk mengakses aplikasi.
    - Login yang berhasil akan mengarahkan Anda ke jendela **Menu**, di mana Anda dapat mengakses fitur konversi file.
+
 **3.3 Konversi File**
    - Di jendela **Menu**, pilih file dengan mengklik **Select File**. Tipe file yang didukung termasuk DOCX, CSV, TXT, XLSX, XLS, PNG, JPG, JPEG, dan PDF.
    - Pilih format konversi (baik **Convert to PDF** atau **Convert to DOCX**) dari dropdown.
@@ -43,6 +45,7 @@ Aplikasi ini dibuat dengan Python, menggunakan PyQt6 untuk antarmuka grafis dan 
 **4.1 Pengaturan Database**
    - Aplikasi ini menggunakan database SQLite bernama `users.db`.
    - Database diinisialisasi secara otomatis pada penggunaan pertama, membuat tabel `users` untuk menyimpan username dan password.
+
 **4.2 Konversi File yang Didukung**
    - **CSV ke PDF/DOCX**: Mengonversi file CSV ke PDF atau DOCX dengan setiap baris ditampilkan dalam dokumen.
    - **DOCX ke PDF**: Mengonversi dokumen DOCX ke format PDF.
@@ -50,6 +53,7 @@ Aplikasi ini dibuat dengan Python, menggunakan PyQt6 untuk antarmuka grafis dan 
    - **Excel (XLSX, XLS) ke PDF/DOCX**: Menangani spreadsheet, menampilkan setiap baris di file yang dikonversi.
    - **Gambar (PNG, JPG, JPEG) ke PDF**: Mengonversi gambar ke format PDF.
    - **PDF ke DOCX**: Mengekstrak teks dari halaman PDF dan menyimpannya ke dokumen DOCX.
+
 **4.3 Alur Konversi File**
    - Setelah memilih file dan format konversi, aplikasi menggunakan metode khusus untuk menangani setiap jenis file.
    - Penanganan kesalahan diimplementasikan untuk memberi tahu pengguna jika file tidak didukung atau konversi gagal.
@@ -58,4 +62,4 @@ Aplikasi ini dibuat dengan Python, menggunakan PyQt6 untuk antarmuka grafis dan 
 - **Masalah Login**: Pastikan username dan password Anda benar. Jika belum terdaftar, gunakan jendela **Register** terlebih dahulu.
 - **Kesalahan Konversi File**: Jika konversi gagal, periksa apakah tipe file didukung dan file dapat diakses. Lihat pesan kesalahan untuk panduan lebih lanjut.
 ---
-Buku panduan ini memberikan gambaran umum untuk pengaturan dan operasi, membantu pengguna memahami dan menggunakan setiap fitur dengan efektif. Untuk pertanyaan tambahan, konsultasikan dengan dukungan IT Anda.
+Buku panduan ini memberikan gambaran umum untuk pengaturan dan operasi, membantu pengguna memahami dan menggunakan setiap fitur dengan efektif. Untuk pertanyaan tambahan, konsultasikan ke thecocoanutmedia@gmail.com .
