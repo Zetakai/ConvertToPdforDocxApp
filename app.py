@@ -2,7 +2,6 @@ import sys
 import os
 import sqlite3
 import pandas as pd
-import pdfkit
 import markdown2
 from docx import Document
 from reportlab.lib.pagesizes import letter
@@ -10,6 +9,7 @@ from reportlab.pdfgen import canvas
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QMessageBox, QFileDialog, QLineEdit, QCheckBox, QGroupBox, QHBoxLayout, QProgressBar, QComboBox
 )
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import (Qt,QTimer)
 from PIL import Image
 import platform
@@ -120,7 +120,7 @@ class MenuWindow(QWidget):
         super().__init__()
         self.setWindowTitle("File Conversion to PDF or DOCX")
         self.resize(500, 300)
-
+        
         # File selection group
         file_selection_group = QGroupBox("File Selection")
         self.supported_files_label = QLabel("Supported file types: DOCX, CSV, TXT, XLSX, XLS, PNG, JPG, JPEG, PDF")
@@ -363,12 +363,6 @@ class MenuWindow(QWidget):
         QMessageBox.information(self, "Success", f"Image converted to PDF: {pdf_path}")
         open_file(pdf_path)
 
-    def convert_html_to_pdf(self, file_path):
-        pdf_path = file_path.replace('.html', '.pdf')
-        pdfkit.from_file(file_path, pdf_path)
-        QMessageBox.information(self, "Success", f"HTML converted to PDF: {pdf_path}")
-        open_file(pdf_path)
-
 
     def logout(self):
         self.close()
@@ -380,6 +374,10 @@ class LoginWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Login")
         self.resize(350, 250)
+        
+        self.image_label = QLabel()
+        self.image_label.setPixmap(QPixmap("file.png").scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio))
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Group box for login form
         login_group = QGroupBox("Login to Your Account")
@@ -417,6 +415,7 @@ class LoginWindow(QWidget):
 
         # Main layout
         main_layout = QVBoxLayout()
+        main_layout.addWidget(self.image_label)
         main_layout.addWidget(login_group)
         main_layout.addLayout(button_layout)
         main_layout.setSpacing(15)
